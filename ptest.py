@@ -1,7 +1,6 @@
 from coffea import processor, hist
 from coffea.nanoevents import NanoAODSchema
 import awkward as ak
-import matplotlib.pyplot as plt
 
 import tracemalloc
 tracemalloc.start()
