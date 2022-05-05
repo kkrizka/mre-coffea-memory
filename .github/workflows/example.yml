@@ -6,9 +6,37 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Create python virtual environment
-        run: python -m venv .venv
-      - name: Install dependencies
-        run: source .venv/bin/activate && pip install -r requirements.txt
-      - name: A test
-        run: export
+      - name: Cache Virtual Environment
+        id: cache-venv
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('requirements.txt') }}
+      - name: Create Virtual Environment
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          python -m venv .venv &&
+          source .venv/bin/activate &&
+          pip install -r requirements.txt
+  RunTests:
+    needs: CreateVenv
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        thescript:
+          - utest.py
+          - ftest.py
+          - ptest.py
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache Event Simulation
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('requirements.txt') }}
+      -
+        name: Run {{ matrix.thescript }}
+        run: |
+          source .venv/bin/activate &&
+          python {{ matrix.thescript }}
