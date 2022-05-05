@@ -32,8 +32,8 @@ jobs:
         id: cache-input
         uses: actions/cache@v3
         with:
-          path: example_*.root
-          key: input-002
+          path: example_${{ matrix.baskets }}.root
+          key: input-example_${{ matrix.baskets }}.root-001
       - name: Check out repository code
         if: steps.cache-input.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -71,8 +71,8 @@ jobs:
       - name: Cache Input
         uses: actions/cache@v3
         with:
-          path: example_*.root
-          key: input-002
+          path: ${{ matrix.input }}
+          key: input-${{ matrix.input }}-001
       - name: Run Scripts
         run: |
           source .venv/bin/activate &&
