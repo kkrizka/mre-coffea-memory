@@ -36,7 +36,7 @@ jobs:
           path: .venv
           key: venv-${{ hashFiles('requirements.txt') }}
       -
-        name: Run {{ matrix.thescript }}
+        name: Run Scripts
         run: |
           source .venv/bin/activate &&
-          python {{ matrix.thescript }}
+          python ${{ matrix.thescript }}
