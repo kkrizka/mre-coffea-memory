@@ -9,7 +9,7 @@ tracemalloc.start()
 snapshot1=None
 class MyZPeak(processor.ProcessorABC):
     def __init__(self):
-        self._accumulator = processor.list_accumulator()
+        self._accumulator = processor.dict_accumulator()
 
     @property
     def accumulator(self):
@@ -19,8 +19,11 @@ class MyZPeak(processor.ProcessorABC):
     def process(self, events):
         out = self.accumulator.identity()
 
+        current = tracemalloc.get_traced_memory()[0]
         snapshot = tracemalloc.take_snapshot()
-        out.append((tracemalloc.get_traced_memory()[0],snapshot))
+        print("--- [ Top 5 ] --- (total: {})".format(current))
+        for stat in snapshot.statistics('lineno')[:5]:
+            print(stat)
 
         return out
 
@@ -28,7 +31,7 @@ class MyZPeak(processor.ProcessorABC):
         return accumulator
 
 samples = {
-    "DrellYan": ['nano_dy.root']*10
+    "DrellYan": ['nano_dy.root']*100
 }
 
 result = processor.run_uproot_job(
@@ -38,16 +41,3 @@ result = processor.run_uproot_job(
     processor.iterative_executor,
     {"schema": NanoAODSchema},
 )
-
-memory=[]
-for i in range(1,len(result)):
-    top_stats = result[i][1].compare_to(result[i-1][1], 'lineno')
-    memory.append(result[i][0])
-    print("--- [ Top 5 ] --- (total: {})".format(result[i][0]))
-    for stat in top_stats[:5]:
-        print(stat)
-
-plt.plot(memory)
-plt.ylabel('memory usage [bytes]')
-plt.tight_layout()
-plt.savefig('xtest.png')

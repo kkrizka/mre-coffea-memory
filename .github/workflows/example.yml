@@ -1,0 +1,14 @@
+name: Execute Tests
+on: [push]
+jobs:
+  CreateVenv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Create python virtual environment
+        run: python -m venv .venv
+      - name: Install dependencies
+        run: source .venv/bin/activate && pip install -r requirements.txt
+      - name: A test
+        run: export
