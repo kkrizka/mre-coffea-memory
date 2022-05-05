@@ -1,7 +1,7 @@
 from coffea import processor, hist
 from coffea.nanoevents import NanoAODSchema
 import awkward as ak
-import matplotlib.pyplot as plt
+import uproot
 
 import tracemalloc
 tracemalloc.start()
@@ -31,7 +31,7 @@ class MyZPeak(processor.ProcessorABC):
         return accumulator
 
 samples = {
-    "random": ['example.root']*100
+    "random": ['example_big.root']*100
 }
 
 result = processor.run_uproot_job(

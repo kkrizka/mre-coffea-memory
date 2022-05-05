@@ -1,12 +1,16 @@
 from coffea import processor, hist
 from coffea.nanoevents import NanoAODSchema
-import awkward as ak
+
+import sys
+if len(sys.argv)==1:
+    print('usage: {0} input.root [input.root]'.format(sys.argv[0]))
+    sys.exit(0)
 
 import tracemalloc
 tracemalloc.start()
 
 snapshot1=None
-class MyZPeak(processor.ProcessorABC):
+class MyProcessor(processor.ProcessorABC):
     def __init__(self):
         self._accumulator = processor.dict_accumulator()
 
@@ -30,13 +34,12 @@ class MyZPeak(processor.ProcessorABC):
         return accumulator
 
 samples = {
-    "DrellYan": ['nano_dy.root']*100
+    "DrellYan": sys.argv[1:]
 }
 
 result = processor.run_uproot_job(
     samples,
     "Events",
-    MyZPeak(),
+    MyProcessor(),
     processor.iterative_executor,
-    {"schema": NanoAODSchema},
 )

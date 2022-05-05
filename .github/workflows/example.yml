@@ -8,7 +8,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Cache Virtual Environment
         id: cache-venv
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .venv
           key: venv-${{ hashFiles('requirements.txt') }}
@@ -18,21 +18,35 @@ jobs:
           python -m venv .venv &&
           source .venv/bin/activate &&
           pip install -r requirements.txt
-  DownloadInput:
+  CreateInputs:
+    needs: [CreateVenv]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        baskets:
+          - 10
+          - 100000
     steps:
+
       - name: Cache Input
         id: cache-input
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: nano_dy.root
-          key: input-001
-      - name: Create Virtual Environment
+          path: example_*.root
+          key: input-002
+      - name: Cache Virtual Environment
+        if: steps.cache-input.outputs.cache-hit != 'true'
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('requirements.txt') }}
+      - name: Create Input File w/ ${{ matrix.baskets }} Baskets
         if: steps.cache-input.outputs.cache-hit != 'true'
         run: |
-          wget https://github.com/CoffeaTeam/coffea/raw/master/tests/samples/nano_dy.root
+          source .venv/bin/activate &&
+          python create_input.py example_${{ matrix.baskets }}.root 100000000 ${{ matrix.baskets }}
   RunTests:
-    needs: CreateVenv
+    needs: [CreateVenv, CreateInputs]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -40,20 +54,23 @@ jobs:
           - utest.py
           - ftest.py
           - ptest.py
+        input:
+          - example_10.root
+          - example_100000.root
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Cache Virtual Environment
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .venv
           key: venv-${{ hashFiles('requirements.txt') }}
       - name: Cache Input
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: nano_dy.root
-          key: input-001
+          path: example_*.root
+          key: input-002
       - name: Run Scripts
         run: |
           source .venv/bin/activate &&
-          python ${{ matrix.thescript }}
+          python ${{ matrix.thescript }} ${{ input }}

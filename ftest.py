@@ -1,14 +1,18 @@
-import awkward as ak
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+
+import sys
+if len(sys.argv)==1:
+    print('usage: {0} input.root [input.root]'.format(sys.argv[0]))
+    sys.exit(0)
 
 import tracemalloc
 tracemalloc.start()
 
 snapshot1=None
-for fname in ['nano_dy.root']*100:
+for fname in sys.argv[1:]*100:
+    #events = NanoEventsFactory.from_root(fname, schemaclass=NanoAODSchema).events()
+    events = NanoEventsFactory.from_root(fname).events()
     current=tracemalloc.get_traced_memory()[0]
-
-    events = NanoEventsFactory.from_root(fname, schemaclass=NanoAODSchema).events()
 
     snapshot2 = tracemalloc.take_snapshot()
     if snapshot1 is not None:
