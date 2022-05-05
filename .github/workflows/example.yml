@@ -18,6 +18,19 @@ jobs:
           python -m venv .venv &&
           source .venv/bin/activate &&
           pip install -r requirements.txt
+  DownloadInput:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Input
+        id: cache-input
+        uses: actions/cache@v2
+        with:
+          path: nano_dy.root
+          key: input-001
+      - name: Create Virtual Environment
+        if: steps.cache-input.outputs.cache-hit != 'true'
+        run: |
+          wget https://github.com/CoffeaTeam/coffea/raw/master/tests/samples/nano_dy.root
   RunTests:
     needs: CreateVenv
     runs-on: ubuntu-latest
@@ -30,13 +43,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Cache Event Simulation
+      - name: Cache Virtual Environment
         uses: actions/cache@v2
         with:
           path: .venv
           key: venv-${{ hashFiles('requirements.txt') }}
-      -
-        name: Run Scripts
+      - name: Cache Input
+        uses: actions/cache@v2
+        with:
+          path: nano_dy.root
+          key: input-001
+      - name: Run Scripts
         run: |
           source .venv/bin/activate &&
           python ${{ matrix.thescript }}
