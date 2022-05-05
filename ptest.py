@@ -1,5 +1,4 @@
 from coffea import processor, hist
-from coffea.nanoevents import NanoAODSchema
 
 import sys
 if len(sys.argv)==1:

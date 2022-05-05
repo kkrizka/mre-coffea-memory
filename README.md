@@ -1,17 +1,17 @@
-Tries to reproduce a memory leak in the coffea framework that I noticed in running over a large dataset. The input is a simple TTree (all branches are basic types). The memory consumption of the python process is steadily increasing with each iteration of `processor.ProcessorABC.process` until it is fully filled up.
+Tries to reproduce a memory leak in the coffea framework that I noticed in running over a large dataset. The input is a simple TTree (all branches are basic types). The memory consumption of the python process is steadily increasing with each iteration of `processor.ProcessorABC.process` until it is fully filled up. While trying to reproduce this in a simple example, I've noticed that the problem is currelated with a larger number of baskets.
 
-This MRE tries to reproduce it in four examples. It is based on the coffea test sample (`nano_dy.root`), following [instructions from the documentation](https://coffeateam.github.io/coffea/notebooks/nanoevents.html). It scales the small `nano_dy.root` into a "large dataset" by looping over it multiple times.
+I've prepared a demonstrative MRE in my GitHub. It creates a simple TTree (100M events, 10 or 10k baskets, 3 branches of floats) and then processes it in different ways.
 
-There are three versions of the code:
-- `ptest.py` creates a `processor.ProcessorABC` (based on `MyZPeak`) and uses `run_uproot_job`+`iterative_executor`
+- `ptest.py` creates a `processor.ProcessorABC` and uses `run_uproot_job`+`iterative_executor`
 - `ftest.py` calls `NanoEventsFactory.from_root` multiple times
 - `utest.py` uses `uproot.iterate`
 
 The observations are:
-- utest.py (uproot only, no coffea) memory usage is constant. So I don't think this is an uproot issue.
-- Both ptest and ftest slowly grow with size. The main source of increase is the following.
+- `utest.py` is fine. So this is not an uproot problem.
+- `ftest.py` is fine. So everything is cleaned up once a file is closed.
+- `ptest.py` has memory usage slowly increasing (up to 1GiB) at every call to `process`. Then it drops. According the `tracemalloc`, the following package is responsible for most of it:
 ```
-/home/runner/work/mre-coffea-memory/mre-coffea-memory/.venv/lib/python3.8/site-packages/uproot/_util.py:564: size=5145 KiB (+51.4 KiB), count=75802 (+758), average=70 B
+/home/runner/work/mre-coffea-memory/mre-coffea-memory/.venv/lib/python3.8/site-packages/uproot/source/file.py:67: size=858 MiB, count=30, average=28.6 MiB
 ```
 
 For my actual application, the tracemalloc shows the following top 10 memory users. The compression is slowly growing in each call to `processor.ProcessorABC.process`.
@@ -28,11 +28,32 @@ For my actual application, the tracemalloc shows the following top 10 memory use
 /global/u2/k/kkrizka/lowmu/coffea_plots/.venv/lib/python3.9/site-packages/uproot/source/cursor.py:118: size=99.0 MiB, count=1533798, average=68 B
 ```
 
+This can also be reproduced by running on an CMS Open Data MiniAOD multiple times.
+```
+python ptest.py $(printf '/data/kkrizka/opendata/cms/Run2015D/SingleMuon/MINIAOD/16Dec2015-v1/0034202D-A3A8-E511-BA9C-00259073E3DA.root %.0s' {1..10})
+```
+
+Last being:
+```
+--- [ Top 5 ] --- (total: 450592678)
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/compression.py:93: size=58.8 MiB, count=18, average=3343 KiB
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/model.py:753: size=44.7 MiB, count=607619, average=77 B
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/source/cursor.py:48: size=37.1 MiB, count=748696, average=52 B
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/model.py:807: size=29.8 MiB, count=185920, average=168 B
+/usr/lib/python3.9/json/decoder.py:353: size=29.0 MiB, count=362249, average=84 B
+--- [ Top 5 ] --- (total: 500308957)
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/compression.py:93: size=65.3 MiB, count=20, average=3343 KiB
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/model.py:753: size=49.6 MiB, count=675133, average=77 B
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/source/cursor.py:48: size=41.3 MiB, count=831884, average=52 B
+/home/kkrizka/MRE/mre-coffea-memory/.venv/lib/python3.9/site-packages/uproot/model.py:807: size=33.1 MiB, count=206578, average=168 B
+/usr/lib/python3.9/json/decoder.py:353: size=32.2 MiB, count=402491, average=84 B
+```
 
 The can be run as follows:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -f requirements.txt
-python ptest.py # or any of the other ones
+python create_input.py example.root 100000000 10000
+python ptest.py example.root # or any of the other scripts
 ```

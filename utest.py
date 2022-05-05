@@ -11,7 +11,7 @@ tracemalloc.start()
 inputs=list(map(lambda x: f'{x}:Events', sys.argv[1:]))
 
 snapshot1=None
-for events in uproot.iterate(inputs*100):
+for events in uproot.iterate(inputs):
     current=tracemalloc.get_traced_memory()[0]
 
     snapshot2 = tracemalloc.take_snapshot()

@@ -1,4 +1,4 @@
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.nanoevents import NanoEventsFactory
 
 import sys
 if len(sys.argv)==1:
@@ -10,7 +10,6 @@ tracemalloc.start()
 
 snapshot1=None
 for fname in sys.argv[1:]*100:
-    #events = NanoEventsFactory.from_root(fname, schemaclass=NanoAODSchema).events()
     events = NanoEventsFactory.from_root(fname).events()
     current=tracemalloc.get_traced_memory()[0]
 
