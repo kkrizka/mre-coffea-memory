@@ -34,6 +34,9 @@ jobs:
         with:
           path: example_*.root
           key: input-002
+      - name: Check out repository code
+        if: steps.cache-input.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
       - name: Cache Virtual Environment
         if: steps.cache-input.outputs.cache-hit != 'true'
         uses: actions/cache@v3
