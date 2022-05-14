@@ -53,7 +53,7 @@ The can be run as follows:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -f requirements.txt
+pip install -r requirements.txt
 python create_input.py example.root 100000000 10000
 python ptest.py example.root # or any of the other scripts
 ```
