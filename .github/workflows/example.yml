@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: input.root
-          key: input-input.root-001
+          key: input-input.root-001a
       - name: Check out repository code
         if: steps.cache-input.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
@@ -58,7 +58,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ matrix.input }}
-          key: input-${{ matrix.input }}-001
+          key: input-${{ matrix.input }}-001a
       - name: Run Scripts
         run: |
           source .venv/bin/activate &&
