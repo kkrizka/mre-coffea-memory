@@ -27,14 +27,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: input.root
-          key: input-input.root-001a
+          key: input-input.root-001
       - name: Check out repository code
         if: steps.cache-input.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
       - name: Create Input File
         if: steps.cache-input.outputs.cache-hit != 'true'
         run: |
-          root create_input.C && ls
+          root create_input.C
   RunTests:
     needs: [CreateVenv, CreateInputs]
     runs-on: ubuntu-latest
@@ -58,7 +58,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ matrix.input }}
-          key: input-${{ matrix.input }}-001a
+          key: input-${{ matrix.input }}-001
       - name: Run Scripts
         run: |
           source .venv/bin/activate &&
