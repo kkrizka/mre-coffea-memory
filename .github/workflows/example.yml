@@ -34,7 +34,7 @@ jobs:
       - name: Create Input File
         if: steps.cache-input.outputs.cache-hit != 'true'
         run: |
-          root -q create_input.C+
+          root -q create_input.C+ && ls -lh
   RunTests:
     needs: [CreateVenv, CreateInputs]
     runs-on: ubuntu-latest
