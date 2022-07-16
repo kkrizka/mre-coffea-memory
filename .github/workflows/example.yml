@@ -35,6 +35,10 @@ jobs:
         if: steps.cache-input.outputs.cache-hit != 'true'
         run: |
           root -q create_input.C+ && ls -lh
+      - name: test cache
+        if: steps.cache-input.outputs.cache-hit == 'true'
+        run: |
+          ls
   RunTests:
     needs: [CreateVenv, CreateInputs]
     runs-on: ubuntu-latest
