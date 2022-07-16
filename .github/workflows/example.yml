@@ -19,35 +19,22 @@ jobs:
           source .venv/bin/activate &&
           pip install -r requirements.txt
   CreateInputs:
-    needs: [CreateVenv]
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        baskets:
-          - 10
-          - 100000
+    container: rootproject/root
     steps:
-
       - name: Cache Input
         id: cache-input
         uses: actions/cache@v3
         with:
-          path: example_${{ matrix.baskets }}.root
-          key: input-example_${{ matrix.baskets }}.root-001
+          path: input.root
+          key: input-input.root-001
       - name: Check out repository code
         if: steps.cache-input.outputs.cache-hit != 'true'
         uses: actions/checkout@v3
-      - name: Cache Virtual Environment
-        if: steps.cache-input.outputs.cache-hit != 'true'
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ hashFiles('requirements.txt') }}
-      - name: Create Input File w/ ${{ matrix.baskets }} Baskets
+      - name: Create Input File
         if: steps.cache-input.outputs.cache-hit != 'true'
         run: |
-          source .venv/bin/activate &&
-          python create_input.py example_${{ matrix.baskets }}.root 100000000 ${{ matrix.baskets }}
+          root create_input.C
   RunTests:
     needs: [CreateVenv, CreateInputs]
     runs-on: ubuntu-latest
@@ -58,8 +45,7 @@ jobs:
           - ftest.py
           - ptest.py
         input:
-          - example_10.root
-          - example_100000.root
+          - input.root
     steps:
       - name: Checkout
         uses: actions/checkout@v2
